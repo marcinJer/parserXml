@@ -1,3 +1,10 @@
+import org.xml.sax.SAXException;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -38,5 +45,18 @@ public class GenerateUrlLink {
         String xmlFilename = getXmlFilename(date);
         URL myURL = new URL("http://www.nbp.pl/kursy/xml/" + xmlFilename + ".xml");
         return myURL;
+    }
+
+    public static void unMarshalingExample(Date date) throws JAXBException, IOException, ParserConfigurationException, SAXException {
+        JAXBContext jaxbContext = JAXBContext.newInstance(Currencies.class);
+        Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(true);
+        Currencies currencies = (Currencies) jaxbUnmarshaller.unmarshal(factory.newDocumentBuilder().parse(new URL(String.valueOf(generateUrlToXmlFile(date))).openStream()));
+
+        for (Currency currency : currencies.getCurrencies()) {
+            System.out.println(currency.getNazwa_waluty());
+            System.out.println(currency.getKod_waluty());
+        }
     }
 }
