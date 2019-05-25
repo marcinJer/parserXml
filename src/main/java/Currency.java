@@ -1,7 +1,6 @@
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.math.BigDecimal;
 
 @XmlRootElement(name = "pozycja")
 @XmlAccessorType(XmlAccessType.FIELD)

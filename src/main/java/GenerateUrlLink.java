@@ -1,4 +1,3 @@
-import org.omg.CosNaming.NamingContextPackage.NotFound;
 import org.xml.sax.SAXException;
 
 import javax.xml.bind.JAXBContext;
@@ -9,12 +8,14 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class GenerateUrlLink {
 
@@ -38,8 +39,10 @@ public class GenerateUrlLink {
         return myURL;
     }
 
-    private static void unMarshalingExample(URL url, String currencyCode) {
+    private static MyResult unMarshalingExample(URL url, String currencyCode) {
         JAXBContext jaxbContext = null;
+        BigDecimal buyingCourseWithDot = null;
+        BigDecimal sellingCourseWithDot = null;
         try {
             jaxbContext = JAXBContext.newInstance(Currencies.class);
             Unmarshaller jaxbUnmarshaller = null;
@@ -55,22 +58,20 @@ public class GenerateUrlLink {
                     .newDocumentBuilder()
                     .parse(String.valueOf(url)));
 
-            List<String> buyingCourseWithDot = currencies.getCurrencies().stream()
+            buyingCourseWithDot = currencies.getCurrencies().stream()
                     .filter(currency -> currency.getKod_waluty().equals(currencyCode))
-                    .map(currency -> currency.getKurs_kupna().replaceAll(",", "."))
-                    .collect(Collectors.toList());
+                    .map(currency -> new BigDecimal(currency.getKurs_kupna().replaceAll(",", ".")))
+                    .findFirst().get();
 
-            List<String> sellingCourseWithDot = currencies.getCurrencies().stream()
+            sellingCourseWithDot = currencies.getCurrencies().stream()
                     .filter(currency -> currency.getKod_waluty().equals(currencyCode))
-                    .map(currency -> currency.getKurs_sprzedazy().replaceAll(",", "."))
-                    .collect(Collectors.toList());
+                    .map(currency -> new BigDecimal(currency.getKurs_sprzedazy().replaceAll(",", ".")))
+                    .findFirst().get();
 
-
-            System.out.println(sellingCourseWithDot);
-            System.out.println(buyingCourseWithDot);
         } catch (JAXBException | SAXException | IOException | ParserConfigurationException e) {
             e.printStackTrace();
         }
+        return new MyResult(buyingCourseWithDot, sellingCourseWithDot);
     }
 
     public static List dirTxtList(Date startDate, Date endDate, String currencyCode) throws MalformedURLException {
@@ -87,6 +88,7 @@ public class GenerateUrlLink {
     }
 
     private static List urlXmlLinks(List<URL> listOfDirFiles, Date startDate, Date endDate, String currencyCode) {
+        List<BigDecimal> allBuyingCourse = new ArrayList<>();
         listOfDirFiles.forEach(url -> {
             try {
                 final List<String> listOfAllStrings = getStringsFromDirFile(url);
@@ -111,10 +113,10 @@ public class GenerateUrlLink {
                         .map(GenerateUrlLink::generateUrlToXmlFile)
                         .collect(Collectors.toList());
 
+                listOfAllWantedXmlUrls.forEach(url1 -> {
 
-                System.out.println(listOfAllWantedXmlUrls);
-                listOfAllWantedXmlUrls.forEach(url1 -> unMarshalingExample(url1, currencyCode));
-
+                    allBuyingCourse.add(unMarshalingExample(url1, currencyCode).getBuyingCourse());
+                });
 
 
             } catch (IOException e) {
@@ -122,7 +124,7 @@ public class GenerateUrlLink {
             }
 
         });
-        return null;
+        return allBuyingCourse;
     }
 
     private static List<String> getStringsFromDirFile(URL url) throws IOException {
@@ -136,5 +138,4 @@ public class GenerateUrlLink {
 
         return listOfAllStrings;
     }
-
 }
