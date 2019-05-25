@@ -12,6 +12,6 @@ public class MainClass {
 //        GenerateUrlLink.getXmlFilename(Date.valueOf("2014-03-12"));
 //        System.out.println(GenerateUrlLink.generateUrlToXmlFile(Date.valueOf("2014-03-12")));
 //        GenerateUrlLink.unMarshalingExample(Date.valueOf("2014-03-12"), "USD");
-        System.out.println(GenerateUrlLink.dirTxtList(Date.valueOf("2014-03-12"),Date.valueOf("2014-03-17")));
+        System.out.println(GenerateUrlLink.dirTxtList(Date.valueOf("2014-03-12"),Date.valueOf("2014-03-17"), "USD"));
     }
 }

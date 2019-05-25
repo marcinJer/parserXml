@@ -28,60 +28,52 @@ public class GenerateUrlLink {
         return Integer.parseInt(formatter.format(date));
     }
 
-    /*private static String getXmlFilename(Date date) throws IOException {
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy");
-        final String getYear = formatter.format(date);
-        URL myURL = new URL("http://www.nbp.pl/kursy/xml/dir" + getYear + ".txt");
-
-        BufferedReader in = new BufferedReader(new InputStreamReader(myURL.openStream()));
-        String line;
-        final List<String> list = new ArrayList<>();
-        while ((line = in.readLine()) != null) {
-            list.add(line);
+    private static URL generateUrlToXmlFile(String string) {
+        URL myURL = null;
+        try {
+            myURL = new URL("http://www.nbp.pl/kursy/xml/" + string + ".xml");
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
         }
-        in.close();
-
-        Optional<String> c = list.stream()
-                .filter(String -> String.startsWith("c") && String.endsWith(generateDateFormat(date)))
-                .findFirst();
-        if (c.isPresent()) {
-            c.get();
-            return c.get();
-        } else return null;
-
-    }*/
-
-    /*public static URL generateUrlToXmlFile(Date date) throws IOException {
-        String xmlFilename = getXmlFilename(date);
-        URL myURL = new URL("http://www.nbp.pl/kursy/xml/" + xmlFilename + ".xml");
         return myURL;
-    }*/
+    }
 
-    /*public static void unMarshalingExample(Date date, String currencyCode) throws JAXBException, IOException, ParserConfigurationException, SAXException {
-        JAXBContext jaxbContext = JAXBContext.newInstance(Currencies.class);
-        Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+    private static void unMarshalingExample(URL url, String currencyCode) {
+        JAXBContext jaxbContext = null;
+        try {
+            jaxbContext = JAXBContext.newInstance(Currencies.class);
+            Unmarshaller jaxbUnmarshaller = null;
 
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setNamespaceAware(true);
-        Currencies currencies = (Currencies) jaxbUnmarshaller.unmarshal(factory
-                .newDocumentBuilder()
-                .parse(String.valueOf(generateUrlToXmlFile(date))));
-
-        Optional<String> buyingCourseWithDot = currencies.getCurrencies().stream()
-                .filter(currency -> currency.getKod_waluty().equals(currencyCode))
-                .map(currency -> currency.getKurs_kupna().replaceAll(",", "."))
-                .findFirst();
-
-        List<String> sellingCourseWithDot = currencies.getCurrencies().stream()
-                .filter(currency -> currency.getKod_waluty().equals(currencyCode))
-                .map(currency -> currency.getKurs_sprzedazy().replaceAll(",", "."))
-                .collect(Collectors.toList());
+            jaxbUnmarshaller = jaxbContext.createUnmarshaller();
 
 
-        System.out.println(sellingCourseWithDot);
-    }*/
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true);
+            Currencies currencies = null;
 
-    public static List dirTxtList(Date startDate, Date endDate) throws MalformedURLException {
+            currencies = (Currencies) jaxbUnmarshaller.unmarshal(factory
+                    .newDocumentBuilder()
+                    .parse(String.valueOf(url)));
+
+            List<String> buyingCourseWithDot = currencies.getCurrencies().stream()
+                    .filter(currency -> currency.getKod_waluty().equals(currencyCode))
+                    .map(currency -> currency.getKurs_kupna().replaceAll(",", "."))
+                    .collect(Collectors.toList());
+
+            List<String> sellingCourseWithDot = currencies.getCurrencies().stream()
+                    .filter(currency -> currency.getKod_waluty().equals(currencyCode))
+                    .map(currency -> currency.getKurs_sprzedazy().replaceAll(",", "."))
+                    .collect(Collectors.toList());
+
+
+            System.out.println(sellingCourseWithDot);
+            System.out.println(buyingCourseWithDot);
+        } catch (JAXBException | SAXException | IOException | ParserConfigurationException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static List dirTxtList(Date startDate, Date endDate, String currencyCode) throws MalformedURLException {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy");
         final Integer getYearFromStartDate = Integer.parseInt(formatter.format(startDate));
         final Integer getYearFromEndDate = Integer.parseInt(formatter.format(endDate));
@@ -91,20 +83,13 @@ public class GenerateUrlLink {
             URL myURL = new URL("http://www.nbp.pl/kursy/xml/dir" + i + ".txt");
             listOfDirTextFiles.add(myURL);
         }
-        return urlXmlLinks(listOfDirTextFiles, startDate, endDate);
-//        return listOfDirTextFiles;
+        return urlXmlLinks(listOfDirTextFiles, startDate, endDate, currencyCode);
     }
 
-    private static List urlXmlLinks(List<URL> listOfDirFiles, Date startDate, Date endDate) {
+    private static List urlXmlLinks(List<URL> listOfDirFiles, Date startDate, Date endDate, String currencyCode) {
         listOfDirFiles.forEach(url -> {
             try {
-                BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
-                String line;
-                final List<String> listOfAllStrings = new ArrayList<>();
-                while ((line = in.readLine()) != null) {
-                    listOfAllStrings.add(line);
-                }
-                in.close();
+                final List<String> listOfAllStrings = getStringsFromDirFile(url);
 
                 List<String> listOfAllStringsForCTable = listOfAllStrings.stream()
                         .filter(string -> string.startsWith("c"))
@@ -119,36 +104,17 @@ public class GenerateUrlLink {
                         .filter(integer -> integer >= generateDate(startDate) && integer <= generateDate(endDate))
                         .collect(Collectors.toList());
 
-                List<String> result = new ArrayList<>();
-
-                for (String xmlUrl : listOfAllStringsForCTable) {
-                    for (Integer dates : listOfWantedDates) {
-                        if (xmlUrl.contains(String.valueOf(dates))) {
-                            result.add(xmlUrl);
-                        }
-                    }
-                }
-
-                List<String> listOfAllWantedXmlUrls = listOfAllStringsForCTable.stream()
+                List<URL> listOfAllWantedXmlUrls = listOfAllStringsForCTable.stream()
                         .filter(s -> listOfWantedDates.stream()
                                 .map(String::valueOf)
                                 .anyMatch(s::contains))
+                        .map(GenerateUrlLink::generateUrlToXmlFile)
                         .collect(Collectors.toList());
 
 
                 System.out.println(listOfAllWantedXmlUrls);
+                listOfAllWantedXmlUrls.forEach(url1 -> unMarshalingExample(url1, currencyCode));
 
-                /*List<String> listOfDates = listOfAllStringsAsDate.stream()
-                        .map(s -> new Date(Integer.parseInt(s.substring(0, 1)), Integer.parseInt(s.substring(2, 3)), Integer.parseInt(s.substring(4, 5))))
-                        .filter(s -> s.after(startDate) && s.before(endDate))
-                        .map(s -> generateDateFormat(s))
-                        .collect(Collectors.toList());*/
-
-               /* List<String> listOfXmlFiles = listOfAllStringsForCTable.stream()
-                        .filter(string -> string.endsWith(listOfDates.stream().findAny().get()))
-                        .collect(Collectors.toList());
-
-                System.out.println(listOfXmlFiles);*/
 
 
             } catch (IOException e) {
@@ -157,6 +123,18 @@ public class GenerateUrlLink {
 
         });
         return null;
+    }
+
+    private static List<String> getStringsFromDirFile(URL url) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+        String line;
+        final List<String> listOfAllStrings = new ArrayList<>();
+        while ((line = in.readLine()) != null) {
+            listOfAllStrings.add(line);
+        }
+        in.close();
+
+        return listOfAllStrings;
     }
 
 }
