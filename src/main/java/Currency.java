@@ -10,8 +10,8 @@ public class Currency {
     private String nazwa_waluty;
     private int przelicznik;
     private String kod_waluty;
-    private BigDecimal kurs_kupna;
-    private BigDecimal kurs_sprzedazy;
+    private String kurs_kupna;
+    private String kurs_sprzedazy;
 
     public String getNazwa_waluty() {
         return nazwa_waluty;
@@ -37,19 +37,29 @@ public class Currency {
         this.kod_waluty = kod_waluty;
     }
 
-    public BigDecimal getKurs_kupna() {
+    public String getKurs_kupna() {
         return kurs_kupna;
     }
 
-    public void setKurs_kupna(BigDecimal kurs_kupna) {
+    public void setKurs_kupna(String kurs_kupna) {
         this.kurs_kupna = kurs_kupna;
     }
 
-    public BigDecimal getKurs_sprzedazy() {
+    public String getKurs_sprzedazy() {
         return kurs_sprzedazy;
     }
 
-    public void setKurs_sprzedazy(BigDecimal kurs_sprzedazy) {
+    public void setKurs_sprzedazy(String kurs_sprzedazy) {
         this.kurs_sprzedazy = kurs_sprzedazy;
+    }
+
+    @Override
+    public String toString() {
+        return "nazwa_waluty='" + nazwa_waluty + '\'' +
+                ", przelicznik=" + przelicznik +
+                ", kod_waluty='" + kod_waluty + '\'' +
+                ", kurs_kupna=" + kurs_kupna +
+                ", kurs_sprzedazy=" + kurs_sprzedazy +
+                '}';
     }
 }
