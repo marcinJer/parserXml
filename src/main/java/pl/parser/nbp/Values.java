@@ -66,9 +66,9 @@ public class Values {
     @Override
     public String toString() {
         return "Kod waluty = " + currencyCode + '\n' +
-                "Data początkowa = " + startDate + '\n'+
-                "Data końcowa = " + endDate + '\n' +
-                "Średnia kursów kupna = " + average + '\n' +
-                "Średnia ochylenia standardowego kursów sprzedaży = " + standardDeviation;
+                "Data poczatkowa = " + startDate + '\n'+
+                "Data koncowa = " + endDate + '\n' +
+                "Srednia kursow kupna = " + average + '\n' +
+                "Odchylenia standardowego kursow sprzedazy = " + standardDeviation;
     }
 }
