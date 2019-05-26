@@ -1,4 +1,4 @@
-package pl.parser;
+package pl.parser.nbp;
 
 import org.xml.sax.SAXException;
 
@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class GenerateUrlLink {
+class GenerateUrlLink {
 
     private static Integer dateToIntYear(Date date) {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy");
@@ -78,7 +78,7 @@ public class GenerateUrlLink {
         return new Course(buyingCourseWithDot, sellingCourseWithDot);
     }
 
-    public static Values dirTxtList(String currencyCode, Date startDate, Date endDate) throws MalformedURLException {
+    Values dirTxtList(String currencyCode, Date startDate, Date endDate) throws MalformedURLException {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy");
         int getYearFromStartDate = Integer.parseInt(formatter.format(startDate));
         int getYearFromEndDate = Integer.parseInt(formatter.format(endDate));

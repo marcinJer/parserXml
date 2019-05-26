@@ -1,4 +1,4 @@
-package pl.parser;
+package pl.parser.nbp;
 
 import java.util.List;
 
@@ -25,7 +25,9 @@ public class Statistics {
             for (double a : data)
                 temp += (a - mean) * (a - mean);
             return temp / (data.size() - 1);
-        }else return 0.0;
+        } else if (data.size() == 0) {
+            return 0.0;
+        } else return 0.0;
     }
 
     double getStdDev() {

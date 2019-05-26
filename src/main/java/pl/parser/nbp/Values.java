@@ -1,4 +1,4 @@
-package pl.parser;
+package pl.parser.nbp;
 
 import java.util.Date;
 
@@ -65,7 +65,7 @@ public class Values {
 
     @Override
     public String toString() {
-        return "Kod waluty = '" + currencyCode + '\n' +
+        return "Kod waluty = " + currencyCode + '\n' +
                 "Data początkowa = " + startDate + '\n'+
                 "Data końcowa = " + endDate + '\n' +
                 "Średnia kursów kupna = " + average + '\n' +

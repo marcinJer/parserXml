@@ -1,4 +1,4 @@
-package pl.parser;
+package pl.parser.nbp;
 
 public final class Course {
     private Double buyingCourse;
