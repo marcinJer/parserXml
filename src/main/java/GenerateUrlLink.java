@@ -14,14 +14,15 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class GenerateUrlLink {
 
-    private static String generateDateFormat(Date date) {
-        SimpleDateFormat formatter = new SimpleDateFormat("yyMMdd");
-        return formatter.format(date);
+    private static Integer dateToIntYear(Date date) {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy");
+        return Integer.parseInt(formatter.format(date));
     }
 
     private static Integer generateDate(Date date) {
@@ -76,58 +77,150 @@ public class GenerateUrlLink {
 
     public static List dirTxtList(Date startDate, Date endDate, String currencyCode) throws MalformedURLException {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy");
-        final Integer getYearFromStartDate = Integer.parseInt(formatter.format(startDate));
-        final Integer getYearFromEndDate = Integer.parseInt(formatter.format(endDate));
+        final int getYearFromStartDate = Integer.parseInt(formatter.format(startDate));
+        final int getYearFromEndDate = Integer.parseInt(formatter.format(endDate));
 
-        List<URL> listOfDirTextFiles = new ArrayList<>();
+        HashMap<Integer, URL> listOfDirTextFiles = new HashMap<>();
         for (int i = getYearFromStartDate; i <= getYearFromEndDate; i++) {
             URL myURL = new URL("http://www.nbp.pl/kursy/xml/dir" + i + ".txt");
-            listOfDirTextFiles.add(myURL);
+            listOfDirTextFiles.put(i, myURL);
         }
         return urlXmlLinks(listOfDirTextFiles, startDate, endDate, currencyCode);
     }
 
-    private static List urlXmlLinks(List<URL> listOfDirFiles, Date startDate, Date endDate, String currencyCode) {
-        List<BigDecimal> allBuyingCourse = new ArrayList<>();
-        listOfDirFiles.forEach(url -> {
+    private static List urlXmlLinks(HashMap<Integer, URL> listOfDirFiles, Date startDate, Date endDate, String currencyCode) {
+        List<BigDecimal> allBuyingCourseValues = new ArrayList<>();
+        List<BigDecimal> allSellingCourseValues = new ArrayList<>();
+        List<Integer> listOfWantedDates = new ArrayList<>();
+        List<URL> listOfAllWantedXmlUrls = new ArrayList<>();
+
+        listOfDirFiles.forEach((integer, url) -> {
             try {
-                final List<String> listOfAllStrings = getStringsFromDirFile(url);
 
-                List<String> listOfAllStringsForCTable = listOfAllStrings.stream()
-                        .filter(string -> string.startsWith("c"))
-                        .collect(Collectors.toList());
-
-
-                List<Integer> listOfAllIntegersAsDate = listOfAllStringsForCTable.stream()
-                        .map(string -> Integer.parseInt(string.substring(5, 11)))
-                        .collect(Collectors.toList());
-
-                List<Integer> listOfWantedDates = listOfAllIntegersAsDate.stream()
-                        .filter(integer -> integer >= generateDate(startDate) && integer <= generateDate(endDate))
-                        .collect(Collectors.toList());
-
-                List<URL> listOfAllWantedXmlUrls = listOfAllStringsForCTable.stream()
-                        .filter(s -> listOfWantedDates.stream()
-                                .map(String::valueOf)
-                                .anyMatch(s::contains))
-                        .map(GenerateUrlLink::generateUrlToXmlFile)
-                        .collect(Collectors.toList());
-
-                listOfAllWantedXmlUrls.forEach(url1 -> {
-
-                    allBuyingCourse.add(unMarshalingExample(url1, currencyCode).getBuyingCourse());
-                });
+                if ((integer.equals(dateToIntYear(endDate)) && listOfDirFiles.size() == 1)) {
+                    BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+                    String line;
+                    final List<String> listOfAllStrings = new ArrayList<>();
+                    while ((line = in.readLine()) != null) {
+                        listOfAllStrings.add(line);
+                    }
+                    in.close();
+                    List<String> listOfAllStringsForCTable = listOfAllStrings.stream()
+                            .filter(string -> string.startsWith("c"))
+                            .collect(Collectors.toList());
 
 
+                    List<Integer> listOfAllIntegersAsDate = listOfAllStringsForCTable.stream()
+                            .map(string -> Integer.parseInt(string.substring(5, 11)))
+                            .collect(Collectors.toList());
+
+                    listOfWantedDates.addAll(listOfAllIntegersAsDate.stream()
+                            .filter(integer1 -> integer1 >= generateDate(startDate) && integer1 <= generateDate(endDate))
+                            .collect(Collectors.toList()));
+
+                    listOfAllWantedXmlUrls.addAll(listOfAllStringsForCTable.stream()
+                            .filter(s -> listOfWantedDates.stream()
+                                    .map(String::valueOf)
+                                    .anyMatch(s::contains))
+                            .map(GenerateUrlLink::generateUrlToXmlFile)
+                            .collect(Collectors.toList()));
+
+                    listOfAllWantedXmlUrls.forEach(url1 -> {
+                        allBuyingCourseValues.add(unMarshalingExample(url1, currencyCode).getBuyingCourse());
+                        allSellingCourseValues.add(unMarshalingExample(url1, currencyCode).getSellingCourse());
+                    });
+                    return;
+
+                } else if (integer.equals(dateToIntYear(endDate))) {
+                    BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+                    String line;
+                    final List<String> listOfAllStrings = new ArrayList<>();
+                    while ((line = in.readLine()) != null) {
+                        listOfAllStrings.add(line);
+                    }
+                    in.close();
+
+                    List<String> listOfAllStringsForCTable = listOfAllStrings.stream()
+                            .filter(string -> string.startsWith("c"))
+                            .collect(Collectors.toList());
+
+
+                    List<Integer> listOfAllIntegersAsDate = listOfAllStringsForCTable.stream()
+                            .map(string -> Integer.parseInt(string.substring(5, 11)))
+                            .collect(Collectors.toList());
+
+                    listOfAllIntegersAsDate.forEach(integer1 -> {
+                        if (integer1 >= listOfAllIntegersAsDate.get(0) && integer1 <= generateDate(endDate)) {
+                            listOfWantedDates.add(integer1);
+
+                            listOfAllWantedXmlUrls.addAll(listOfAllStringsForCTable.stream()
+                                    .filter(s -> listOfWantedDates.stream()
+                                            .map(String::valueOf)
+                                            .anyMatch(s::contains))
+                                    .map(s -> {
+                                        allBuyingCourseValues.add(unMarshalingExample(generateUrlToXmlFile(s), currencyCode).getBuyingCourse());
+                                        allSellingCourseValues.add(unMarshalingExample(generateUrlToXmlFile(s), currencyCode).getSellingCourse());
+                                        return generateUrlToXmlFile(s);
+                                    })
+                                    .collect(Collectors.toList()));
+
+                            /*listOfAllWantedXmlUrls.forEach(url1 -> {
+                                allBuyingCourseValues.add(unMarshalingExample(url1, currencyCode).getBuyingCourse());
+                                allSellingCourseValues.add(unMarshalingExample(url1, currencyCode).getSellingCourse());
+                            });*/
+
+                        } else return;
+                    });
+//                            .filter(integer1 -> integer1 >= listOfAllIntegersAsDate.get(0) && integer1 <= generateDate(endDate))
+//                            .collect(Collectors.toList()));
+
+
+                    return;
+
+                } else {
+                    BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+                    String line;
+                    final List<String> listOfAllStrings = new ArrayList<>();
+                    while ((line = in.readLine()) != null) {
+                        listOfAllStrings.add(line);
+                    }
+                    in.close();
+
+                    List<String> listOfAllStringsForCTable = listOfAllStrings.stream()
+                            .filter(string -> string.startsWith("c"))
+                            .collect(Collectors.toList());
+
+
+                    List<Integer> listOfAllIntegersAsDate = listOfAllStringsForCTable.stream()
+                            .map(string -> Integer.parseInt(string.substring(5, 11)))
+                            .collect(Collectors.toList());
+
+                    listOfWantedDates.addAll(listOfAllIntegersAsDate.stream()
+                            .filter(integer1 -> integer1 >= generateDate(startDate) && integer1 <= listOfAllIntegersAsDate.get(listOfAllIntegersAsDate.size() - 1))
+                            .collect(Collectors.toList()));
+
+                    listOfAllWantedXmlUrls.addAll(listOfAllStringsForCTable.stream()
+                            .filter(s -> listOfWantedDates.stream()
+                                    .map(String::valueOf)
+                                    .anyMatch(s::contains))
+                            .map(GenerateUrlLink::generateUrlToXmlFile)
+                            .collect(Collectors.toList()));
+
+                    listOfAllWantedXmlUrls.forEach(url1 -> {
+                        allBuyingCourseValues.add(unMarshalingExample(url1, currencyCode).getBuyingCourse());
+                        allSellingCourseValues.add(unMarshalingExample(url1, currencyCode).getSellingCourse());
+                    });
+                    return;
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
         });
-        return allBuyingCourse;
+        return allBuyingCourseValues;
     }
 
-    private static List<String> getStringsFromDirFile(URL url) throws IOException {
+    /*private static List<String> getStringsFromDirFile(URL url) throws IOException {
         BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
         String line;
         final List<String> listOfAllStrings = new ArrayList<>();
@@ -137,5 +230,5 @@ public class GenerateUrlLink {
         in.close();
 
         return listOfAllStrings;
-    }
+    }*/
 }

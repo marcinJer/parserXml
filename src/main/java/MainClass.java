@@ -3,6 +3,6 @@ import java.sql.Date;
 
 public class MainClass {
     public static void main(String[] args) throws IOException {
-        System.out.println(GenerateUrlLink.dirTxtList(Date.valueOf("2014-03-12"),Date.valueOf("2014-03-17"), "USD"));
+        System.out.println(GenerateUrlLink.dirTxtList(Date.valueOf("2014-12-30"),Date.valueOf("2015-01-02"), "USD"));
     }
 }
