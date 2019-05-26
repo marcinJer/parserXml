@@ -5,6 +5,6 @@ import java.sql.Date;
 
 public class MainClass {
     public static void main(String[] args) throws IOException {
-        System.out.println(new GenerateUrlLink().dirTxtList(args[0], Date.valueOf(args[1]), Date.valueOf(args[2])));
+        System.out.println(new DataProcessing().getDirFiles(args[0], Date.valueOf(args[1]), Date.valueOf(args[2])));
     }
 }

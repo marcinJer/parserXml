@@ -69,6 +69,6 @@ public class Values {
                 "Data poczatkowa = " + startDate + '\n'+
                 "Data koncowa = " + endDate + '\n' +
                 "Srednia kursow kupna = " + average + '\n' +
-                "Odchylenia standardowego kursow sprzedazy = " + standardDeviation;
+                "Odchylenie standardowe kursow sprzedazy = " + standardDeviation;
     }
 }

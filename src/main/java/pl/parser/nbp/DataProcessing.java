@@ -1,6 +1,7 @@
 package pl.parser.nbp;
 
 import org.xml.sax.SAXException;
+import pl.parser.nbp.xmlElements.Currencies;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -21,7 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
-class GenerateUrlLink {
+class DataProcessing {
 
     private static Integer dateToIntYear(Date date) {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy");
@@ -78,7 +79,7 @@ class GenerateUrlLink {
         return new Course(buyingCourseWithDot, sellingCourseWithDot);
     }
 
-    Values dirTxtList(String currencyCode, Date startDate, Date endDate) throws MalformedURLException {
+    Values getDirFiles(String currencyCode, Date startDate, Date endDate) throws MalformedURLException {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy");
         int getYearFromStartDate = Integer.parseInt(formatter.format(startDate));
         int getYearFromEndDate = Integer.parseInt(formatter.format(endDate));
@@ -100,17 +101,17 @@ class GenerateUrlLink {
                 URL myURL = new URL("http://www.nbp.pl/kursy/xml/dir" + i + ".txt");
                 listOfDirTextFiles.put(i, myURL);
             }
-            return urlXmlLinks(listOfDirTextFiles, currencyCode, startDate, endDate);
+            return getDataFromDirAndXmlFiles(listOfDirTextFiles, currencyCode, startDate, endDate);
         } else {
             for (int i = getYearFromStartDate; i <= getYearFromEndDate; i++) {
                 URL myURL = new URL("http://www.nbp.pl/kursy/xml/dir" + i + ".txt");
                 listOfDirTextFiles.put(i, myURL);
             }
-            return urlXmlLinks(listOfDirTextFiles, currencyCode, startDate, endDate);
+            return getDataFromDirAndXmlFiles(listOfDirTextFiles, currencyCode, startDate, endDate);
         }
     }
 
-    private static Values urlXmlLinks(HashMap<Integer, URL> listOfDirFiles, String currencyCode, Date startDate, Date endDate) {
+    private static Values getDataFromDirAndXmlFiles(HashMap<Integer, URL> listOfDirFiles, String currencyCode, Date startDate, Date endDate) {
         List<Double> allBuyingCourseValues = new ArrayList<>();
         List<Double> allSellingCourseValues = new ArrayList<>();
         List<Integer> listOfWantedDates = new ArrayList<>();
@@ -208,7 +209,7 @@ class GenerateUrlLink {
                 .filter(s -> listOfWantedDates.stream()
                         .map(String::valueOf)
                         .anyMatch(s::contains))
-                .map(GenerateUrlLink::generateUrlToXmlFile)
+                .map(DataProcessing::generateUrlToXmlFile)
                 .collect(Collectors.toList()));
     }
 
