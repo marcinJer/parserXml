@@ -10,6 +10,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -76,7 +78,7 @@ public class GenerateUrlLink {
         return new Course(buyingCourseWithDot, sellingCourseWithDot);
     }
 
-    public static Values dirTxtList(Date startDate, Date endDate, String currencyCode) throws MalformedURLException {
+    public static Values dirTxtList(String currencyCode, Date startDate, Date endDate) throws MalformedURLException {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy");
         int getYearFromStartDate = Integer.parseInt(formatter.format(startDate));
         int getYearFromEndDate = Integer.parseInt(formatter.format(endDate));
@@ -98,17 +100,17 @@ public class GenerateUrlLink {
                 URL myURL = new URL("http://www.nbp.pl/kursy/xml/dir" + i + ".txt");
                 listOfDirTextFiles.put(i, myURL);
             }
+            return urlXmlLinks(listOfDirTextFiles, currencyCode, startDate, endDate);
         } else {
             for (int i = getYearFromStartDate; i <= getYearFromEndDate; i++) {
                 URL myURL = new URL("http://www.nbp.pl/kursy/xml/dir" + i + ".txt");
                 listOfDirTextFiles.put(i, myURL);
             }
-            return urlXmlLinks(listOfDirTextFiles, startDate, endDate, currencyCode);
+            return urlXmlLinks(listOfDirTextFiles, currencyCode, startDate, endDate);
         }
-        return urlXmlLinks(listOfDirTextFiles, startDate, endDate, currencyCode);
     }
 
-    private static Values urlXmlLinks(HashMap<Integer, URL> listOfDirFiles, Date startDate, Date endDate, String currencyCode) {
+    private static Values urlXmlLinks(HashMap<Integer, URL> listOfDirFiles, String currencyCode, Date startDate, Date endDate) {
         List<Double> allBuyingCourseValues = new ArrayList<>();
         List<Double> allSellingCourseValues = new ArrayList<>();
         List<Integer> listOfWantedDates = new ArrayList<>();
@@ -184,16 +186,21 @@ public class GenerateUrlLink {
                 e.printStackTrace();
             }
         });
-        return countAvgAndStandardDeviation(allBuyingCourseValues, allSellingCourseValues);
+        return countAvgAndStandardDeviation(currencyCode, startDate, endDate, allBuyingCourseValues, allSellingCourseValues);
     }
 
-    private static Values countAvgAndStandardDeviation(List<Double> buyingCourses, List<Double> sellingCourses) {
+    private static Values countAvgAndStandardDeviation(String currencyCode, Date startDate, Date endDate, List<Double> buyingCourses, List<Double> sellingCourses) {
 
         Double average = buyingCourses.stream().mapToDouble(val -> val).average().orElse(0.0);
+        BigDecimal bdAvg = new BigDecimal(average).setScale(4, RoundingMode.HALF_UP);
+        double convertedAverage = bdAvg.doubleValue();
 
         Statistics statistics = new Statistics(sellingCourses);
 
-        return new Values(average, statistics.getStdDev());
+        BigDecimal bdSd = new BigDecimal(statistics.getStdDev()).setScale(4, RoundingMode.HALF_UP);
+        double standadDeviation = bdSd.doubleValue();
+
+        return new Values(currencyCode, startDate, endDate, convertedAverage, standadDeviation);
     }
 
     private static void getAllXmlsBetweenTwoDates(List<Integer> listOfWantedDates, List<URL> listOfAllWantedXmlUrls, List<String> listOfAllStringsForCTable) {
